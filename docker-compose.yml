@@ -1,0 +1,81 @@
+services:
+  api: &main_app
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      rmq:
+        condition: service_healthy
+
+  db:
+    image: postgres:16.8-alpine
+    hostname: order_inventory_platform-db
+    environment:
+      POSTGRES_PASSWORD: "order_inventory_platform"
+      POSTGRES_USER: "order_inventory_platform"
+      POSTGRES_DB: "order_inventory_platform"
+    ports:
+      - "5432:5432"
+    volumes:
+      - order_inventory_platform-db-data:/var/lib/postgresql/data
+    restart: always
+    healthcheck:
+      test: pg_isready -U order_inventory_platform
+      interval: 2s
+      timeout: 3s
+      retries: 40
+
+  rmq:
+    image: rabbitmq:3.9.16-alpine
+    hostname: order_inventory_platform-rmq
+    restart: always
+    ports:
+      - "5672:5672"
+    environment:
+      RABBITMQ_DEFAULT_USER: "guest"
+      RABBITMQ_DEFAULT_PASS: "guest"
+      RABBITMQ_DEFAULT_VHOST: "/"
+    healthcheck:
+      test: rabbitmq-diagnostics check_running -q
+      interval: 3s
+      timeout: 3s
+      retries: 50
+
+  taskiq-worker:
+    <<: *main_app
+    command: [taskiq, worker, -fsd, project.tkq:broker, -w, "1", --max-fails, "1"]
+    ports: []
+    depends_on:
+      rmq:
+        condition: service_healthy
+
+  taskiq-scheduler:
+    <<: *main_app
+    command: [taskiq, scheduler, -fsd, project.tkq:scheduler]
+    ports: []
+    depends_on:
+      rmq:
+        condition: service_healthy
+
+  migrator:
+    <<: *main_app
+    restart: "no"
+    command: alembic upgrade head
+    ports: []
+    volumes:
+      - ./project/db:/app/src/project/db
+    depends_on:
+      - api
+
+
+
+volumes:
+  order_inventory_platform-db-data:
+    name: order_inventory_platform-db-data
