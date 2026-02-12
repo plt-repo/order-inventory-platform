@@ -39,8 +39,8 @@ services:
     ports:
       - "5672:5672"
     environment:
-      RABBITMQ_DEFAULT_USER: "guest"
-      RABBITMQ_DEFAULT_PASS: "guest"
+      RABBITMQ_DEFAULT_USER: ${ORDER_INVENTORY_PLATFORM_RABBIT_USER}
+      RABBITMQ_DEFAULT_PASS: ${ORDER_INVENTORY_PLATFORM_RABBIT_PASS}
       RABBITMQ_DEFAULT_VHOST: "/"
     healthcheck:
       test: rabbitmq-diagnostics check_running -q
@@ -72,7 +72,7 @@ services:
     volumes:
       - ./project/db:/app/src/project/db
     depends_on:
-      - api
+      - db
 
 
 

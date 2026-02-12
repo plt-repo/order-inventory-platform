@@ -15,3 +15,9 @@ makemigration:
 unittest:
 	docker compose run --rm api pytest -vv .
 	docker compose down
+
+up:
+	docker compose up -d
+
+down:
+	docker compose down
