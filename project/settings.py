@@ -40,9 +40,6 @@ class Settings(BaseSettings):
     log_level: LogLevel = LogLevel.INFO
     users_secret: str = ""
 
-    imports_creds_secret: str = ""
-    imports_creds_salt: str = ""
-
     # Variables for files
     base_upload_dir: str = "uploads"
 
@@ -63,8 +60,6 @@ class Settings(BaseSettings):
 
     rabbit_pool_size: int = 2
     rabbit_channel_pool_size: int = 10
-
-    wb_task_time_limit_sec: int = 60 * 10
 
     @property
     def db_url(self) -> URL:
